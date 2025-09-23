@@ -3,13 +3,14 @@
 import { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
 import { 
-  ChartBarIcon, 
-  TrendingUpIcon, 
-  TrendingDownIcon,
+  ChartBarIcon,
+  ArrowTrendingUpIcon,
+  ArrowTrendingDownIcon,
   ExclamationTriangleIcon,
-  CheckCircleIcon
-} from '@heroicons/react/24/outline';
+  CheckCircleIcon 
+} from '@heroicons/react/24/solid';
 
+// Replace the existing interface definition with this
 interface PortfolioData {
   uploadId: string;
   ocrResults: {
@@ -138,7 +139,7 @@ export default function PortfolioPage() {
 
         <div className="bg-white shadow rounded-lg p-6">
           <div className="flex items-center">
-            <TrendingUpIcon className="h-8 w-8 text-green-600" />
+            <ArrowTrendingUpIcon className="h-8 w-8 text-green-600" />
             <div className="ml-4">
               <p className="text-sm font-medium text-gray-500">Total Gain/Loss</p>
               <p className={`text-2xl font-semibold ${metrics.totalGainLoss >= 0 ? 'text-green-600' : 'text-red-600'}`}>
@@ -151,9 +152,9 @@ export default function PortfolioPage() {
         <div className="bg-white shadow rounded-lg p-6">
           <div className="flex items-center">
             {metrics.totalGainLossPercent >= 0 ? (
-              <TrendingUpIcon className="h-8 w-8 text-green-600" />
+              <ArrowTrendingUpIcon className="h-8 w-8 text-green-600" />
             ) : (
-              <TrendingDownIcon className="h-8 w-8 text-red-600" />
+              <ArrowTrendingDownIcon className="h-8 w-8 text-red-600" />
             )}
             <div className="ml-4">
               <p className="text-sm font-medium text-gray-500">Return %</p>
@@ -271,7 +272,7 @@ export default function PortfolioPage() {
           <ul className="space-y-2">
             {aiReview.suggestions.map((suggestion, index) => (
               <li key={index} className="flex items-start">
-                <TrendingUpIcon className="h-5 w-5 text-blue-400 mr-2 mt-0.5 flex-shrink-0" />
+                <ArrowTrendingUpIcon className="h-5 w-5 text-blue-400 mr-2 mt-0.5 flex-shrink-0" />
                 <span className="text-sm text-gray-600">{suggestion}</span>
               </li>
             ))}
@@ -292,4 +293,5 @@ export default function PortfolioPage() {
     </div>
   );
 }
+
 
