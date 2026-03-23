@@ -71,7 +71,7 @@ export default function Home() {
               </Link>
             </SignedIn>
             <Link
-              href="/search"
+              href="/dashboard/search"
               className="border border-gray-300 hover:border-indigo-500 text-gray-700 hover:text-indigo-600 px-8 py-3 rounded-lg text-lg font-semibold flex items-center justify-center"
             >
               Search Stocks

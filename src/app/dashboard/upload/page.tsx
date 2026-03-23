@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useCallback } from 'react';
+import { useRouter } from 'next/navigation';
 import { useDropzone } from 'react-dropzone';
 import { 
   CloudArrowUpIcon, 
@@ -10,6 +11,7 @@ import {
 } from '@heroicons/react/24/outline';
 
 export default function UploadPage() {
+  const router = useRouter();
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
   const [uploadStatus, setUploadStatus] = useState<'idle' | 'uploading' | 'success' | 'error'>('idle');
   const [uploadProgress, setUploadProgress] = useState(0);
@@ -104,7 +106,7 @@ export default function UploadPage() {
       if (result.success) {
         setAnalysisStatus('completed');
         // Redirect to portfolio view or show results
-        window.location.href = `/dashboard/portfolio/${uploadId}`;
+        router.push(`/dashboard/portfolio/${uploadId}`);
       } else {
         throw new Error(result.error || 'Analysis failed');
       }

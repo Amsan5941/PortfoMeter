@@ -34,7 +34,9 @@ export async function POST(request: NextRequest) {
 
     // Create server client for storage operations
     const serverClient = createServerClient();
-    
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const db = serverClient as any;
+
     // Upload to Supabase Storage
     const { error: uploadError } = await serverClient.storage
       .from('portfolio-uploads')
@@ -54,19 +56,19 @@ export async function POST(request: NextRequest) {
       .getPublicUrl(filePath);
 
     // Create upload record in database
-    let { data: userData, error: userError } = await serverClient
+    const { data: existingUser, error: userError } = await db
       .from('users')
       .select('id')
       .eq('clerk_id', userId)
       .single();
 
+    let userData = existingUser;
+
     if (userError || !userData) {
       // Create user if doesn't exist
-      const { data: newUser, error: createUserError } = await serverClient
+      const { data: newUser, error: createUserError } = await db
         .from('users')
-        .insert({
-          clerk_id: userId,
-        })
+        .insert({ clerk_id: userId })
         .select('id')
         .single();
 
@@ -78,10 +80,10 @@ export async function POST(request: NextRequest) {
       userData = newUser;
     }
 
-    const { data: uploadRecord, error: dbError } = await serverClient
+    const { data: uploadRecord, error: dbError } = await db
       .from('uploads')
       .insert({
-        user_id: userData.id,
+        user_id: (userData as { id: string }).id,
         file_name: file.name,
         file_path: filePath,
         file_size: file.size,
@@ -123,7 +125,7 @@ export async function POST(request: NextRequest) {
           ],
         };
 
-        await serverClient
+        await db
           .from('uploads')
           .update({
             ocr_status: 'completed',
@@ -133,7 +135,7 @@ export async function POST(request: NextRequest) {
 
         // Insert holdings
         if (mockOcrResults.holdings.length > 0) {
-          const holdingsData = mockOcrResults.holdings.map(holding => ({
+          const holdingsData = mockOcrResults.holdings.map((holding: { symbol: string; quantity: number; price: number; costBasis: number; confidence: number }) => ({
             upload_id: uploadRecord.id,
             symbol: holding.symbol,
             quantity: holding.quantity,
@@ -143,13 +145,13 @@ export async function POST(request: NextRequest) {
             confidence_score: holding.confidence,
           }));
 
-          await serverClient
+          await db
             .from('holdings')
             .insert(holdingsData);
         }
       } catch (error) {
         console.error('OCR processing error:', error);
-        await serverClient
+        await db
           .from('uploads')
           .update({
             ocr_status: 'failed',

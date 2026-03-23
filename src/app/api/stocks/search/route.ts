@@ -61,14 +61,13 @@ export async function GET(request: NextRequest) {
           .single();
 
         if (userData) {
-          // TODO: Fix TypeScript issue with Supabase insert
-          // await serverClient
-          //   .from('search_events')
-          //   .insert({
-          //     user_id: userData.id,
-          //     symbol: query.toUpperCase(),
-          //     search_type: 'symbol',
-          //   });
+          const { id: userDbId } = userData as { id: string };
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          await (serverClient.from('search_events') as any).insert({
+            user_id: userDbId,
+            symbol: query.toUpperCase(),
+            search_type: 'symbol',
+          });
         }
       }
     } catch (authError) {

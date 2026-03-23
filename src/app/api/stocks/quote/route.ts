@@ -10,8 +10,12 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Symbol parameter is required' }, { status: 400 });
     }
 
+    interface StockData {
+      symbol: string; price: number; changeAmount: number; changePercent: number;
+      volume: number; marketCap: number; peRatio: number; high52w: number; low52w: number;
+    }
     // Mock stock data for demonstration (fallback when database is not set up)
-    const mockStockData: Record<string, any> = {
+    const mockStockData: Record<string, StockData> = {
       'AAPL': { symbol: 'AAPL', price: 175.43, changeAmount: 2.15, changePercent: 1.24, volume: 45678900, marketCap: 2750000000000, peRatio: 28.5, high52w: 198.23, low52w: 124.17 },
       'TSLA': { symbol: 'TSLA', price: 248.87, changeAmount: -5.23, changePercent: -2.06, volume: 78912300, marketCap: 790000000000, peRatio: 45.2, high52w: 299.29, low52w: 138.80 },
       'NVDA': { symbol: 'NVDA', price: 875.28, changeAmount: 12.45, changePercent: 1.44, volume: 23456700, marketCap: 2150000000000, peRatio: 65.8, high52w: 974.00, low52w: 200.00 },
@@ -71,28 +75,33 @@ export async function GET(request: NextRequest) {
       lastUpdated: new Date().toISOString(),
     };
 
-    // Calculate market cap (approximate)
-    const marketCap = stockData.price * stockData.volume * 1000; // Rough estimate
+    // Calculate approximate market cap from shares outstanding estimate
+    // (volume * 1000 is a very rough proxy; use a real data source for accuracy)
+    const sharesEstimate = stockData.volume * 200; // heuristic
+    const marketCap = stockData.price * sharesEstimate;
     const stockDataWithMarketCap = {
       ...stockData,
       marketCap,
     };
 
-    // Cache the data
-    // TODO: Fix TypeScript issue with Supabase upsert
-    // await serverClient
-    //   .from('stock_quotes')
-    //   .upsert({
-    //     symbol: stockDataWithMarketCap.symbol,
-    //     price: stockDataWithMarketCap.price,
-    //     change_amount: stockDataWithMarketCap.changeAmount,
-    //     change_percent: stockDataWithMarketCap.changePercent,
-    //     volume: stockDataWithMarketCap.volume,
-    //     market_cap: stockDataWithMarketCap.marketCap,
-    //     high_52w: stockDataWithMarketCap.high52w,
-    //     low_52w: stockDataWithMarketCap.low52w,
-    //     last_updated: stockDataWithMarketCap.lastUpdated,
-    //   });
+    // Cache the quote in Supabase for future requests (best-effort)
+    try {
+      const serverClient = createServerClient();
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      await (serverClient.from('stock_quotes') as any).upsert({
+        symbol: stockDataWithMarketCap.symbol,
+        price: stockDataWithMarketCap.price,
+        change_amount: stockDataWithMarketCap.changeAmount,
+        change_percent: stockDataWithMarketCap.changePercent,
+        volume: stockDataWithMarketCap.volume,
+        market_cap: stockDataWithMarketCap.marketCap,
+        high_52w: stockDataWithMarketCap.high52w,
+        low_52w: stockDataWithMarketCap.low52w,
+        last_updated: stockDataWithMarketCap.lastUpdated,
+      }, { onConflict: 'symbol' });
+    } catch {
+      // Caching is best-effort — don't fail the request
+    }
 
     return NextResponse.json({
       success: true,
